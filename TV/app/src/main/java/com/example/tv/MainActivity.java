@@ -11,6 +11,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.camera2.CameraManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -54,9 +55,8 @@ public class MainActivity extends AppCompatActivity {
     public static String SERVER_IP = "";
     public static final int SERVER_PORT = 8080;
     String info;
-    String id="0";
+     String id="0";
     int anInt = 1;
-
 
 
     static   ArrayList<Chaine> chaines = new ArrayList();
@@ -71,13 +71,16 @@ public class MainActivity extends AppCompatActivity {
     int sound=0;
     AudioManager audioManager;
     private Bundle saved;
+    SharedPreferences sharedpreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         saved=savedInstanceState;
         setContentView(R.layout.activity_main);
-         audioManager = (AudioManager) getApplicationContext().getSystemService(getApplicationContext().AUDIO_SERVICE);
+        sharedpreferences = getApplicationContext().getSharedPreferences("ID", 0); // 0 - for private mode
+
+        audioManager = (AudioManager) getApplicationContext().getSystemService(getApplicationContext().AUDIO_SERVICE);
         videoView = (VideoView) findViewById(R.id.tv);
         chaines.add(new Chaine(R.raw.friends, "NBC", 0));
         chaines.add(new Chaine(R.raw.domotique, "Arte", 1));
@@ -200,7 +203,11 @@ public class MainActivity extends AppCompatActivity {
 
                         if (action.equals("1"))
                         {
-                            anInt=1;
+                            id = reader.readLine();
+
+                            SharedPreferences.Editor editor = sharedpreferences.edit();
+                            editor.putInt("id", Integer.parseInt(id));
+                            editor.apply();
                             Intent mStartActivity = new Intent(getApplicationContext(), MainActivity.class);
                             int mPendingIntentId = 123456;
                             PendingIntent mPendingIntent = PendingIntent.getActivity(MainActivity.this, mPendingIntentId, mStartActivity,
@@ -214,6 +221,17 @@ public class MainActivity extends AppCompatActivity {
                         {
                             id = reader.readLine();
                             System.out.println(id);
+
+                            if (!id.equals("0"))
+                            {
+                                if (info==null)
+                                {
+                                    fetchData(Integer.parseInt(id),0,chaines.get(0).getNom_Chaine());
+
+                                }else {
+                                    fetchData(Integer.parseInt(id), 0, chaines.get(Integer.parseInt(info)).getNom_Chaine());
+                                }
+                            }
                                    finishAffinity();
 
                         }
@@ -252,6 +270,39 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void onBackPressed()
+    {  System.out.println("onbaaaaaaaaackpressed");
+        if (sharedpreferences.getInt("id",0)!=0)
+        {
+            System.out.println(sharedpreferences.getInt("id",0));
+            if (info==null)
+            {
+                fetchData(sharedpreferences.getInt("id",0),0,chaines.get(0).getNom_Chaine());
+
+            }else {
+                fetchData(sharedpreferences.getInt("id",0), 0, chaines.get(Integer.parseInt(info)).getNom_Chaine());
+            }
+        }
+        super.onBackPressed();
+
+    }
+
+
+    public  void onResume() {
+        if (sharedpreferences.getInt("id",0)!=0)
+        {
+            System.out.println(sharedpreferences.getInt("id",0));
+        if (info==null)
+        {
+            fetchData(sharedpreferences.getInt("id",0),1,chaines.get(0).getNom_Chaine());
+
+        }else {
+            fetchData(sharedpreferences.getInt("id",0), 1, chaines.get(Integer.parseInt(info)).getNom_Chaine());
+        }
+        }
+        super.onResume();
     }
 
 }
