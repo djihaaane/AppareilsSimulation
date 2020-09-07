@@ -48,7 +48,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
     ServerSocket serverSocket;
     private SharedPreferences sharedpreferences;
-   public static String id = null;
+   public static int id;
     DevicePolicyManager deviceManger ;
     ComponentName compName ;
     Thread Thread1 = null;
@@ -155,8 +155,10 @@ public class MainActivity extends AppCompatActivity {
                         editor.putInt("id", Integer.parseInt(type));
                         editor.putInt("etat", Integer.parseInt(etat));
                         editor.apply();
+                        id=sharedpreferences.getInt("id",0);
                         System.out.println(sharedpreferences.getInt("id",0));
                                  if (etat.equals("1")) {
+                                     fetchData(id,0,"");
                                      runOnUiThread(new Runnable() {
                                          @Override
                                          public void run() {
@@ -175,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
                                  }
 
                                  if (etat.equals("0")){
+                                     fetchData(id,0,"");
                                      runOnUiThread(new Runnable() {
                                          @SuppressLint("ServiceCast")
                                          @Override
@@ -251,5 +254,44 @@ public class MainActivity extends AppCompatActivity {
         // Add the following line to unregister the Sensor Manager onPause
        // mSensorManager.unregisterListener(mShakeDetector);
         super.onPause();
+    }
+
+    private void fetchData(int Appareil_ID,int Appareil_Mode,String Appareil_Desc) {
+        GetDataService api = RetrofitClientInstance.getRetrofitInstance().create(GetDataService.class);
+        String id=String.valueOf(Appareil_ID).trim();
+        String mod=String.valueOf(Appareil_Mode).trim();
+        Call<Result> call = api.sendAppareilMode(mod,id);
+        Call<Result> call1 = api.sendHistoriqueAppareil(id,mod,Appareil_Desc.trim());
+
+        call.enqueue(new Callback<Result>() {
+            @Override
+            public void onResponse(Call<Result> call, Response<Result> response) {
+                System.out.println(response.body().getMessage());
+
+            }
+
+            @Override
+            public void onFailure(Call<Result> call, Throwable t) {
+
+                Toast.makeText(getApplicationContext(), ""+t.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                System.out.println(t.getMessage());
+
+            }
+        });
+        call1.enqueue(new Callback<Result>() {
+            @Override
+            public void onResponse(Call<Result> call, Response<Result> response) {
+                System.out.println(response.body().getMessage());
+
+            }
+
+            @Override
+            public void onFailure(Call<Result> call, Throwable t) {
+
+                Toast.makeText(getApplicationContext(), ""+t.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                System.out.println(t.getMessage());
+
+            }
+        });
     }
 }
